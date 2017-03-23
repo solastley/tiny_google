@@ -66,5 +66,11 @@
             });
         });
     });
+
+    $(document).ajaxStart(function() {
+        if ($("#init-container").is(":visible")) {
+            $("#init-container").html("<h4>Initializing the inverted index...");
+        }
+    });
 </script>
 {% endblock %}
