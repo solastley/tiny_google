@@ -11,7 +11,6 @@ def index(request):
     return render(request, "index.html", context)
 
 def initialize(request):
-    # TODO: execute shell commands to initialize the inverted index here
     print "Initializing the inverted index..."
     path = settings.BASE_DIR + "/app/mapreduce/init.sh"
     p = subprocess.Popen(path, shell=True, stdout=subprocess.PIPE)
@@ -19,6 +18,26 @@ def initialize(request):
     return HttpResponse(status=200)
 
 def search(request):
-    # TODO: execute shell commands to search the inverted index here
     print "Searching the inverted index..."
-    return HttpResponse("Success!")
+
+    # generate the command to execute bash script using keywords
+    keyword_string = request.POST["search"]
+    keywords = keyword_string.split()
+    command = settings.BASE_DIR + "/app/mapreduce/search.sh "
+    for i in range(len(keywords)):
+        command += keywords[i] + " "
+
+    # execute bash script and wait for it to complete
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    p.wait()
+
+    # read the results file
+    f = open("/tmp/tiny_google_results/results.txt")
+    output = f.read()
+    f.close()
+    # format and return data to the front end
+    result = ""
+    books = output.split("\n")
+    for i in range(len(books)):
+        result += "<h5>" + books[i] + "</h5>"
+    return HttpResponse(result)
