@@ -265,8 +265,8 @@ public class initialize {
 
                 this.pipeline = new StanfordCoreNLP(props);
             }
-            public List<String> lemmatize(String documentText) {
-                List<String> lemmas = new ArrayList<String>();
+            public ArrayList<String> lemmatize(String documentText) {
+                ArrayList<String> lemmas = new ArrayList<>();
                 Annotation document = new Annotation(documentText);
                 // run all Annotators on this text
                 this.pipeline.annotate(document);
