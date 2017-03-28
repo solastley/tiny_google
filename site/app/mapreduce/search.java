@@ -69,29 +69,31 @@ public class search {
         JobClient.runJob(job1);
 
         //get set of books that contain keywords and populate docList
-        HashSet<String> relevantDocs = new HashSet<>();
         DocData [] docList = new DocData[counts.size()];
         Iterator docDataIt = counts.entrySet().iterator();
         int index = 0;
-        while(docDataIt.hasNext()){
+        while (docDataIt.hasNext()) {
             Map.Entry pair = (Map.Entry) docDataIt.next();
             docList[index] = (DocData) pair.getValue();
             index++;
             String documentChunk = (String) pair.getKey();
-            relevantDocs.add(documentChunk.split("/")[0]);
         }
 
-        resultWriter.println("Relevant Documents");
-        Iterator relDocsIt = relevantDocs.iterator();
-        while(relDocsIt.hasNext()) {
-            resultWriter.println(relDocsIt.next());
-        }
-        for(DocData d : docList){
+        Set<String> documentSet = new HashSet<String>();
+        List<DocData> sortedConciseDocList = new ArrayList<DocData>();
+        for (DocData d : docList){
             d.computeWeight();
         }
         Arrays.sort(docList);
-        for (int i = 0; i < 5; i++) {
-            printChunk(docList[i]);
+        for (int i = 0; i < docList.length; i++) {
+            if (!documentSet.contains(docList[i].docName)) {
+                documentSet.add(docList[i].docName);
+                sortedConciseDocList.add(docList[i]);
+            }
+        }
+
+        for (int i = 0; i < sortedConciseDocList.size(); i++) {
+            printChunk(sortedConciseDocList.get(i));
         }
 
         resultWriter.flush();
@@ -106,7 +108,7 @@ public class search {
             String line = value.toString();
             String [] parts = line.split("\t");
             String term = parts[0];
-            
+
             //if current line is a keyword
             if (keywords.contains(new String(term))) {
                 String documentData = parts[1];
@@ -124,7 +126,7 @@ public class search {
                         for (int j = 1; j < data.length; j++) {
                             if (!data[j].equals("")) {
                                 String [] chunkData = data[j].split(":");
-                                chunk = Integer.parseInt(chunkData[0]); 
+                                chunk = Integer.parseInt(chunkData[0]);
                                 count = Integer.parseInt(chunkData[1]);
                                 insertChunkData(docName, chunk, term, count);
                             }
@@ -132,9 +134,9 @@ public class search {
                     }
                 }
                 //populate chunkFreq
-                if(!chunkFreq.containsKey(term)) 
+                if(!chunkFreq.containsKey(term))
                     chunkFreq.put(term, chunkCount);
-                else 
+                else
                     chunkFreq.put(term, chunkFreq.get(term)+chunkCount);
             }
         }
@@ -155,8 +157,11 @@ public class search {
         RandomAccessFile file = new RandomAccessFile(doc, "r");
         file.seek(d.chunk*CHUNK_SIZE);
         file.readFully(context);
-        resultWriter.println(d.docName + " " + d.chunk + " " + String.valueOf(d.weight));
-        resultWriter.println(new String(context));
+
+        resultWriter.println("<div class='book-chunk-container'>");
+        resultWriter.println("<h4 class='book-title'>" + d.docName + " " + d.weight + "</h4>");
+        resultWriter.println("<p class='book-context'>" + new String(context) + "</p>");
+        resultWriter.println("</div>");
     }
 
     private static class DocData implements Comparable<DocData> {
@@ -182,6 +187,16 @@ public class search {
                 int chunks = chunkFreq.get(term);
                 float frac = NUMBER_OF_CHUNKS/chunks;
                 weight += (freq*Math.log(frac));
+            }
+
+            termIt = termFreq.entrySet().iterator();
+            while (termIt.hasNext()) {
+                Map.Entry pair = (Map.Entry)termIt.next();
+                String term = (String)pair.getKey();
+                int freq = (int)pair.getValue();
+                if (freq != 0) {
+                    weight *= 10;
+                }
             }
         }
 

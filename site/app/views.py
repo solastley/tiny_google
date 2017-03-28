@@ -12,6 +12,8 @@ def index(request):
 
 def initialize(request):
     print "Initializing the inverted index..."
+    if os.path.isfile("/tmp/tiny_google_index/index.txt"):
+        return HttpResponse(status=200)
     path = settings.BASE_DIR + "/app/mapreduce/init.sh"
     p = subprocess.Popen(path, shell=True, stdout=subprocess.PIPE)
     p.wait()
@@ -35,9 +37,5 @@ def search(request):
     f = open("/tmp/tiny_google_results/results.txt")
     output = f.read()
     f.close()
-    # format and return data to the front end
-    result = ""
-    books = output.split("\n")
-    for i in range(len(books)):
-        result += "<h5>" + books[i] + "</h5>"
-    return HttpResponse(result)
+
+    return HttpResponse(output)

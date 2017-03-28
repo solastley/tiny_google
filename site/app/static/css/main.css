@@ -3,3 +3,11 @@
     margin-top: 20px;
     text-align: center;
 }
+
+#result-container {
+    text-align: left;
+}
+
+.book-chunk-container {
+    padding-top: 20px;
+}
