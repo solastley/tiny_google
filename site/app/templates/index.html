@@ -61,6 +61,12 @@
             "or", "that", "the", "this", "to", "was", "what", "when", "where",
             "who", "will", "with", "the", "ww"];
 
+            var stopwordsLength = stopwords.length;
+            for (var i = 0; i < stopwordsLength; i++) {
+                stopwords.push(capFirst(stopwords[i]));
+                stopwords.push(stopwords[i].toUpperCase());
+            }
+
             $.ajax({
                 type: "POST",
                 url: "http://localhost:8000" + $form.attr("action"),
