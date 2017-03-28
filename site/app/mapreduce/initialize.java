@@ -10,8 +10,17 @@ import org.apache.hadoop.conf.*;
 import org.apache.hadoop.util.*;
 import org.apache.hadoop.fs.Path;
 
+import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.CoreMap;
+
 public class initialize {
     private static PrintWriter indexWriter;
+    private static Lemmatizer lem;
 
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
@@ -22,6 +31,7 @@ public class initialize {
         }
 
         indexWriter = new PrintWriter("/tmp/tiny_google_index/index.txt", "UTF-8");
+        lem = new Lemmatizer();
 
         /* -------------------------- Job 1 ---------------------------------- */
 
@@ -98,6 +108,25 @@ public class initialize {
                 String secondHalf = line.substring(line.length() - bytesLeftInChunk + 1, line.length());
 
                 // split parts into individual words
+                List<String> firstProcessed = lem.lemmatize(firstHalf);
+                List<String> secondProcessed = lem.lemmatize(secondHalf);
+
+                // write values for first section of line
+                for (String word : firstProcessed) {
+                    if (word.length() > 0 && word != null) {
+                        String outKey = word + "," + filename + "," + chunk;
+                        output.collect(new Text(outKey), new IntWritable(1));
+                    }
+                }
+                // write values for second section of line
+                for (String word : firstProcessed) {
+                    if (word.length() > 0 && word != null) {
+                        String outKey = word + "," + filename + "," + (chunk + 1);
+                        output.collect(new Text(outKey), new IntWritable(1));
+                    }
+                }
+                /*
+                 // split parts into individual words
                 String [] firstSplit = firstHalf.split("[^a-zA-Z0-9]+");
                 String [] secondSplit = secondHalf.split("[^a-zA-Z0-9]+");
 
@@ -114,15 +143,25 @@ public class initialize {
                         String outKey = secondSplit[i] + "," + filename + "," + (chunk + 1);
                         output.collect(new Text(outKey), new IntWritable(1));
                     }
-                }
+                }*/
             }
             // this line is contained within one chunk
             else {
+                /*
                 String [] lineSplit = line.split("[^a-zA-Z0-9]+");
                 // write values for this line
                 for (int i = 0; i < lineSplit.length; i++) {
                     if (lineSplit[i].length() > 0 && lineSplit[i] != null) {
                         String outKey = lineSplit[i] + "," + filename + "," + chunk;
+                        output.collect(new Text(outKey), new IntWritable(1));
+                    }
+                }*/
+                List<String> processed = lem.lemmatize(line);
+
+                // write values for first section of line
+                for (String word : processed) {
+                    if (word.length() > 0 && word != null) {
+                        String outKey = word + "," + filename + "," + chunk;
                         output.collect(new Text(outKey), new IntWritable(1));
                     }
                 }
@@ -215,6 +254,33 @@ public class initialize {
             public ChunkData(String c, String f) {
                 this.chunk = new String(c);
                 this.frequency = new String(f);
+            }
+        }
+        private class Lemmatizer {
+            protected StanfordCoreNLP pipeline;
+            private Lemmatizer(){
+                Properties props;
+                props = new Properties();
+                props.put("annotators", "tokenize, ssplit, pos, lemma");
+
+                this.pipeline = new StanfordCoreNLP(props);
+            }
+            public List<String> lemmatize(String documentText) {
+                List<String> lemmas = new ArrayList<String>();
+                Annotation document = new Annotation(documentText);
+                // run all Annotators on this text
+                this.pipeline.annotate(document);
+                // Iterate over all of the sentences found
+                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                for(CoreMap sentence: sentences) {
+                    // Iterate over all tokens in a sentence
+                    for (CoreLabel token: sentence.get(TokensAnnotation.class)) {
+                        // Retrieve and add the lemma for each word into the
+                        // list of lemmas
+                        lemmas.add(token.get(LemmaAnnotation.class));
+                    }
+                }
+                return lemmas;
             }
         }
     }

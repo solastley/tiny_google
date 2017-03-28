@@ -10,19 +10,32 @@ import org.apache.hadoop.conf.*;
 import org.apache.hadoop.util.*;
 import org.apache.hadoop.fs.Path;
 
+import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.CoreMap;
+
 public class search {
+    final int NUMBER_OF_BOOKS = 15;
+
     private static ArrayList<String> keywords;
     private static PrintWriter resultWriter;
+    private static Lemmatizer lem;
 
     public static void main(String[] args) throws Exception {
         /* args[0] is input path, args[1] is output path */
         String inputDir = args[0];
         String outputDir = args[1];
         /* the rest are keywords to search for */
-        keywords = new ArrayList<String>();
+        lem = new Lemmatizer();
+        String query = "";
         for (int i = 2; i < args.length; i++) {
-            keywords.add(new String(args[i]));
+            query = query + " " + args[i];
         }
+        ArrayList<String> keywords = lem.lemmatize(query);
 
         resultWriter = new PrintWriter("/tmp/tiny_google_results/results.txt", "UTF-8");
 
@@ -101,6 +114,33 @@ public class search {
                 if (this.count < d.count) return 1;
                 else if (this.count > d.count) return -1;
                 else return 0;
+            }
+        }
+        private class Lemmatizer {
+            protected StanfordCoreNLP pipeline;
+            private Lemmatizer(){
+                Properties props;
+                props = new Properties();
+                props.put("annotators", "tokenize, ssplit, pos, lemma");
+
+                this.pipeline = new StanfordCoreNLP(props);
+            }
+            public List<String> lemmatize(String documentText) {
+                List<String> lemmas = new ArrayList<String>();
+                Annotation document = new Annotation(documentText);
+                // run all Annotators on this text
+                this.pipeline.annotate(document);
+                // Iterate over all of the sentences found
+                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+                for(CoreMap sentence: sentences) {
+                    // Iterate over all tokens in a sentence
+                    for (CoreLabel token: sentence.get(TokensAnnotation.class)) {
+                        // Retrieve and add the lemma for each word into the
+                        // list of lemmas
+                        lemmas.add(token.get(LemmaAnnotation.class));
+                    }
+                }
+                return lemmas;
             }
         }
     }
