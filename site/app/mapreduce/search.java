@@ -46,10 +46,12 @@ public class search {
         keywords = lem.lemmatize(query);
 
         //remove stop words
+        ArrayList<String> forRemoval = new ArrayList<>();
         for(String keyword : keywords){
             if(STOP_WORDS_SET.contains(keyword))
-                keywords.remove(keyword);
+                forRemoval.add(keyword);
         }
+        keywords.removeAll(forRemoval);
 
         resultWriter = new PrintWriter("/tmp/tiny_google_results/results.txt", "UTF-8");
 
