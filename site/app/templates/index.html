@@ -55,12 +55,17 @@
 
             var $form = $(this);
             var data = $form.serialize();
+            var keywords = $form.find("#search-input").val().split(" ");
             $.ajax({
                 type: "POST",
                 url: "http://localhost:8000" + $form.attr("action"),
                 data: data,
                 dataType: "html",
                 success: function(result_data) {
+                    for (var i = 0; i < keywords.length; i++) {
+                        console.log(keywords[i]);
+                        result_data = result_data.split(keywords[i]).join("<b>" + keywords[i] + "</b>");
+                    }
                     $("#result-container").html(result_data);
                 }
             });
