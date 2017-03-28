@@ -7,6 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 rm -rf /tmp/tiny_google_temp/
 rm -rf /tmp/tiny_google_output/
 rm /tmp/tiny_google_index/index.txt
+rm /tmp/tiny_google_tempfiles/temp.txt
 
 # run map reduce job
 cd $DIR

@@ -20,6 +20,7 @@ import edu.stanford.nlp.util.CoreMap;
 
 public class initialize {
     private static PrintWriter indexWriter;
+    private static PrintWriter tempWriter;
     private static Lemmatizer lem;
 
     public static void main(String[] args) throws Exception {
@@ -31,6 +32,7 @@ public class initialize {
         }
 
         indexWriter = new PrintWriter("/tmp/tiny_google_index/index.txt", "UTF-8");
+        tempWriter = new PrintWriter("/tmp/tiny_google_tempfiles/temp.txt", "UTF-8");
         lem = new Lemmatizer();
 
         /* -------------------------- Job 1 ---------------------------------- */
@@ -59,6 +61,9 @@ public class initialize {
         /* run job 1 */
         JobClient.runJob(job1);
 
+        tempWriter.flush();
+        tempWriter.close();
+
         /* -------------------------- Job 2 ---------------------------------- */
         JobConf job2 = new JobConf(initialize.class);
         job2.setJobName("Tiny Google Inverted Index Creator");
@@ -73,7 +78,7 @@ public class initialize {
         job2.setInputFormat(TextInputFormat.class);
         job2.setOutputFormat(TextOutputFormat.class);
 
-        FileInputFormat.setInputPaths(job2, new Path(args[1]));
+        FileInputFormat.setInputPaths(job2, new Path("/tmp/tiny_google_tempfiles"));
         FileOutputFormat.setOutputPath(job2, new Path(args[2]));
 
         JobClient.runJob(job2);
@@ -151,7 +156,7 @@ public class initialize {
                 frequency++;
             }
 
-            output.collect(key, new IntWritable(frequency));
+            tempWriter.println(key + "\t" + frequency);
         }
     }
 
