@@ -168,7 +168,7 @@ public class search {
         file.seek(d.chunk*CHUNK_SIZE);
         file.readFully(context);
         resultWriter.println("<div class='book-chunk-container'>");
-        resultWriter.println("<h4 class='book-title'>" + d.docName + " " + d.weight + "</h4>");
+        resultWriter.println("<h4 class='book-title'>" + d.docName + "</h4>");
         resultWriter.println("<p class='book-context'>" + new String(context) + "</p>");
         resultWriter.println("</div>");
     }
@@ -215,7 +215,7 @@ public class search {
             else return 0;
         }
     }
-    
+
     private static class Lemmatizer {
         protected StanfordCoreNLP pipeline;
         private Lemmatizer(){

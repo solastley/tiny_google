@@ -56,6 +56,11 @@
             var $form = $(this);
             var data = $form.serialize();
             var keywords = $form.find("#search-input").val().split(" ");
+            var stopwords = ["I", "a", "about", "an", "are", "as", "at", "be",
+            "by", "com", "for", "from", "how", "in", "is", "it", "of", "on",
+            "or", "that", "the", "this", "to", "was", "what", "when", "where",
+            "who", "will", "with", "the", "ww"];
+
             $.ajax({
                 type: "POST",
                 url: "http://localhost:8000" + $form.attr("action"),
@@ -63,8 +68,12 @@
                 dataType: "html",
                 success: function(result_data) {
                     for (var i = 0; i < keywords.length; i++) {
-                        console.log(keywords[i]);
-                        result_data = result_data.split(keywords[i]).join("<b>" + keywords[i] + "</b>");
+                        if ($.inArray(keywords[i], stopwords) == -1) {
+                            result_data = result_data.split(keywords[i]).join("<b>" + keywords[i] + "</b>");
+                            result_data = result_data.split(capFirst(keywords[i])).join("<b>" + capFirst(keywords[i]) + "</b>");
+                            result_data = result_data.split(lowerFirst(keywords[i])).join("<b>" + lowerFirst(keywords[i]) + "</b>");
+                            result_data = result_data.split(keywords[i].toUpperCase()).join("<b>" + keywords[i].toUpperCase() + "</b>");
+                        }
                     }
                     $("#result-container").html(result_data);
                 }
@@ -77,5 +86,13 @@
             $("#init-container").html("<h4>Initializing the inverted index...");
         }
     });
+
+    function capFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function lowerFirst(str) {
+        return str.charAt(0).toLowerCase() + str.slice(1);
+    }
 </script>
 {% endblock %}
