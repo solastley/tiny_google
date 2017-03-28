@@ -125,39 +125,10 @@ public class initialize {
                         output.collect(new Text(outKey), new IntWritable(1));
                     }
                 }
-                /*
-                 // split parts into individual words
-                String [] firstSplit = firstHalf.split("[^a-zA-Z0-9]+");
-                String [] secondSplit = secondHalf.split("[^a-zA-Z0-9]+");
-
-                // write values for first section of line
-                for (int i = 0; i < firstSplit.length; i++) {
-                    if (firstSplit[i].length() > 0 && firstSplit[i] != null) {
-                        String outKey = firstSplit[i] + "," + filename + "," + chunk;
-                        output.collect(new Text(outKey), new IntWritable(1));
-                    }
-                }
-                // write values for second section of line
-                for (int i = 0; i < secondSplit.length; i++) {
-                    if (secondSplit[i].length() > 0 && secondSplit[i] != null) {
-                        String outKey = secondSplit[i] + "," + filename + "," + (chunk + 1);
-                        output.collect(new Text(outKey), new IntWritable(1));
-                    }
-                }*/
             }
             // this line is contained within one chunk
             else {
-                /*
-                String [] lineSplit = line.split("[^a-zA-Z0-9]+");
-                // write values for this line
-                for (int i = 0; i < lineSplit.length; i++) {
-                    if (lineSplit[i].length() > 0 && lineSplit[i] != null) {
-                        String outKey = lineSplit[i] + "," + filename + "," + chunk;
-                        output.collect(new Text(outKey), new IntWritable(1));
-                    }
-                }*/
                 List<String> processed = lem.lemmatize(line);
-
                 // write values for first section of line
                 for (String word : processed) {
                     if (word.length() > 0 && word != null) {
@@ -256,32 +227,32 @@ public class initialize {
                 this.frequency = new String(f);
             }
         }
-        private class Lemmatizer {
-            protected StanfordCoreNLP pipeline;
-            private Lemmatizer(){
-                Properties props;
-                props = new Properties();
-                props.put("annotators", "tokenize, ssplit, pos, lemma");
+    }
+    private static class Lemmatizer {
+        protected StanfordCoreNLP pipeline;
+        private Lemmatizer(){
+            Properties props;
+            props = new Properties();
+            props.put("annotators", "tokenize, ssplit, pos, lemma");
 
-                this.pipeline = new StanfordCoreNLP(props);
-            }
-            public ArrayList<String> lemmatize(String documentText) {
-                ArrayList<String> lemmas = new ArrayList<>();
-                Annotation document = new Annotation(documentText);
-                // run all Annotators on this text
-                this.pipeline.annotate(document);
-                // Iterate over all of the sentences found
-                List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-                for(CoreMap sentence: sentences) {
-                    // Iterate over all tokens in a sentence
-                    for (CoreLabel token: sentence.get(TokensAnnotation.class)) {
-                        // Retrieve and add the lemma for each word into the
-                        // list of lemmas
-                        lemmas.add(token.get(LemmaAnnotation.class));
-                    }
+            this.pipeline = new StanfordCoreNLP(props);
+        }
+        public ArrayList<String> lemmatize(String documentText) {
+            ArrayList<String> lemmas = new ArrayList<>();
+            Annotation document = new Annotation(documentText);
+            // run all Annotators on this text
+            this.pipeline.annotate(document);
+            // Iterate over all of the sentences found
+            List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+            for(CoreMap sentence: sentences) {
+                // Iterate over all tokens in a sentence
+                for (CoreLabel token: sentence.get(TokensAnnotation.class)) {
+                    // Retrieve and add the lemma for each word into the
+                    // list of lemmas
+                    lemmas.add(token.get(LemmaAnnotation.class));
                 }
-                return lemmas;
             }
+            return lemmas;
         }
     }
 }

@@ -106,11 +106,14 @@ public class search {
                     }
                 }
 
+                //populate chunkFreq
                 if(!chunkFreq.containsKey(term)) 
                     chunkFreq.put(term, chunkCount);
                 else 
                     chunkFreq.put(term, chunkFreq.get(term)+chunkCount);
 
+                //get set of books that contain keywords and populate docList
+                HashSet<String> relevantDocs = new HashSet<>();
                 DocData [] docList = new DocData[counts.size()];
                 Iterator docDataIt = counts.entrySet().iterator();
                 int index = 0;
@@ -118,11 +121,21 @@ public class search {
                     Map.Entry pair = (Map.Entry) docDataIt.next();
                     docList[index] = (DocData) pair.getValue();
                     index++;
+                    String documentChunk = (String) pair.getKey();
+                    relevantDocs.add(documentChunk.split("/")[0]);
                 }
 
+                resultWriter.println("Relevant Documents");
+                Iterator relDocsIt = relevantDocs.iterator();
+                while(relDocsIt.hasNext()) {
+                    resultWriter.println(relDocsIt.next());
+                }
+                for(DocData d : docList){
+                    d.computeWeight();
+                }
                 Arrays.sort(docList);
                 for (int i = 0; i < 5; i++) {
-                    printChunk(docList[i].docName, docList[i].chunk);
+                    printChunk(docList[i]);
                 }
             }
         }
@@ -132,17 +145,28 @@ public class search {
                 counts.put(book + "/" + String.valueOf(chunk), new DocData(book, chunk));
 
             DocData d = counts.get(book + "/" + String.valueOf(chunk));
-            d.termFreq.put(term,count);
+            if(!d.termFreq.containsKey(term))
+                d.termFreq.put(term, 0);
+            d.termFreq.put(term,d.termFreq.get(term)+count);
         }
 
-        private void printChunk(String book, int chunk) throws FileNotFoundException, IOException{
-            File doc = new File("/tmp/tiny_google_input/"+book);
-            byte[] context = new byte[512];
+        private void printChunk(DocData d) throws FileNotFoundException, IOException{
+            File doc = new File("/tmp/tiny_google_input/"+d.docName);
+            byte[] context = new byte[CHUNK_SIZE];
             RandomAccessFile file = new RandomAccessFile(doc, "r");
-            file.seek(chunk*CHUNK_SIZE);
+            file.seek(d.chunk*CHUNK_SIZE);
             file.readFully(context);
-            resultWriter.println(book + " " + chunk);
+            resultWriter.println(d.docName + " " + d.chunk + " " + String.valueOf(d.weight));
             resultWriter.println(new String(context));
+
+            Iterator termIt = d.termFreq.entrySet().iterator();
+            while(termIt.hasNext()){
+                Map.Entry pair = (Map.Entry)termIt.next();
+                String term = (String)pair.getKey();
+                int freq = (int)pair.getValue();
+                resultWriter.println(term + " " + String.valueOf(freq));
+            }
+
         }
 
         private class DocData implements Comparable<DocData> {
@@ -150,7 +174,7 @@ public class search {
             int chunk;
             //stores frequencies of keywords
             HashMap<String, Integer> termFreq;
-            float weight = -1;
+            float weight;
 
             public DocData(String name, int chunk) {
                 this.docName = new String(name);
@@ -158,25 +182,22 @@ public class search {
                 this.termFreq = new HashMap<>();
             }
 
-            public float computeWeight(){
-                if(weight == -1){
-                    Iterator termIt = termFreq.entrySet().iterator();
-                    while(termIt.hasNext()){
-                        Map.Entry pair = (Map.Entry)termIt.next();
-                        String term = (String)pair.getKey();
-                        int freq = (int)pair.getValue();
-                        int chunks = chunkFreq.get(term);
-                        float frac = NUMBER_OF_CHUNKS/chunks;
-                        weight = 0;
-                        weight += (freq*Math.log(frac));
-                    }
+            public void computeWeight(){
+                weight = 0;
+                Iterator termIt = termFreq.entrySet().iterator();
+                while(termIt.hasNext()){
+                    Map.Entry pair = (Map.Entry)termIt.next();
+                    String term = (String)pair.getKey();
+                    int freq = (int)pair.getValue();
+                    int chunks = chunkFreq.get(term);
+                    //float frac = NUMBER_OF_CHUNKS/chunks;
+                    weight += (freq);
                 }
-                return this.weight;
             }
 
             public int compareTo(DocData d) {
-                if (this.computeWeight() < d.computeWeight()) return 1;
-                else if (this.computeWeight() > d.computeWeight()) return -1;
+                if (this.weight < d.weight) return 1;
+                else if (this.weight > d.weight) return -1;
                 else return 0;
             }
         }
