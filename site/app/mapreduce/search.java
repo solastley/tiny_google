@@ -29,7 +29,7 @@ public class search {
     //maps keywords to how many chunks contained the keyword
     private static HashMap<String, Integer> chunkFreq = new HashMap<>();
     //maps docName/chunk to corresponding DocData object
-    static HashMap<String, DocData> counts = new HashMap<>();
+    private static HashMap<String, DocData> counts = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         /* args[0] is input path, args[1] is output path */
@@ -156,7 +156,7 @@ public class search {
         file.seek(d.chunk*CHUNK_SIZE);
         file.readFully(context);
         resultWriter.println(d.docName + " " + d.chunk + " " + String.valueOf(d.weight));
-        resultWriter.println(new String(context));
+        resultWriter.println(new String(context));  
     }
 
     private static class DocData implements Comparable<DocData> {
@@ -191,6 +191,7 @@ public class search {
             else return 0;
         }
     }
+    
     private static class Lemmatizer {
         protected StanfordCoreNLP pipeline;
         private Lemmatizer(){
