@@ -21,6 +21,8 @@ import edu.stanford.nlp.util.CoreMap;
 public class search {
     final static int NUMBER_OF_CHUNKS = 30847;
     final static int CHUNK_SIZE = 512;
+    final static String [] STOP_WORDS = new String[]{"I", "a", "about", "an", "are", "as", "at", "be", "by", "com", "for", "from", "how", "in", "is", "it", "of", "on", "or", "that", "the", "this", "to", "was", "what", "when", "where", "who", "will", "with", "the", "ww"};
+    final static HashSet<String> STOP_WORDS_SET = new HashSet<>(Arrays.asList(STOP_WORDS));
 
     private static List<String> keywords;
     private static PrintWriter resultWriter;
@@ -42,6 +44,12 @@ public class search {
             query = query + " " + args[i];
         }
         keywords = lem.lemmatize(query);
+
+        //remove stop words
+        for(String keyword : keywords){
+            if(STOP_WORDS_SET.contains(keyword))
+                keywords.remove(keyword);
+        }
 
         resultWriter = new PrintWriter("/tmp/tiny_google_results/results.txt", "UTF-8");
 
@@ -157,16 +165,10 @@ public class search {
         RandomAccessFile file = new RandomAccessFile(doc, "r");
         file.seek(d.chunk*CHUNK_SIZE);
         file.readFully(context);
-<<<<<<< HEAD
-        resultWriter.println(d.docName + " " + d.chunk + " " + String.valueOf(d.weight));
-        resultWriter.println(new String(context));  
-=======
-
         resultWriter.println("<div class='book-chunk-container'>");
         resultWriter.println("<h4 class='book-title'>" + d.docName + " " + d.weight + "</h4>");
         resultWriter.println("<p class='book-context'>" + new String(context) + "</p>");
         resultWriter.println("</div>");
->>>>>>> 6177cb79593a747e1b8cf22333dbf0304acd2c0d
     }
 
     private static class DocData implements Comparable<DocData> {
