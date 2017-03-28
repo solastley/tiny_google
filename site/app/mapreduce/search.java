@@ -102,8 +102,6 @@ public class search {
 
         public TGSearchMapper() {}
 
-
-
         public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
             String line = value.toString();
             String [] parts = line.split("\t");
@@ -133,14 +131,11 @@ public class search {
                         }
                     }
                 }
-
                 //populate chunkFreq
                 if(!chunkFreq.containsKey(term)) 
                     chunkFreq.put(term, chunkCount);
                 else 
                     chunkFreq.put(term, chunkFreq.get(term)+chunkCount);
-
-
             }
         }
     }
@@ -162,15 +157,6 @@ public class search {
         file.readFully(context);
         resultWriter.println(d.docName + " " + d.chunk + " " + String.valueOf(d.weight));
         resultWriter.println(new String(context));
-
-        Iterator termIt = d.termFreq.entrySet().iterator();
-        while(termIt.hasNext()){
-            Map.Entry pair = (Map.Entry)termIt.next();
-            String term = (String)pair.getKey();
-            int freq = (int)pair.getValue();
-            resultWriter.println(term + " " + String.valueOf(freq));
-        }
-
     }
 
     private static class DocData implements Comparable<DocData> {
